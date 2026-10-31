@@ -174,7 +174,7 @@ La extensión admite mensajes sólo desde estos orígenes exactos:
   `http://localhost/*` porque los patrones de Chrome no aceptan puertos, pero
   el service worker vuelve a validar el origen completo y rechaza cualquier
   otro puerto.
-- `https://control-clientes-iva.vercel.app` (app publicada en Vercel).
+- `https://control-total-clientes.vercel.app/` (app publicada en Vercel).
 
 Los deploys de vista previa de Vercel (un subdominio distinto en cada deploy)
 quedan afuera a propósito: la extensión sólo funciona desde la dirección de
