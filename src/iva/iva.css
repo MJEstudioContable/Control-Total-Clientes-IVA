@@ -1,0 +1,499 @@
+/*
+ * Módulo Vencimientos IVA.
+ * Usa los tokens del tema ejecutivo (--rx-*) para acompañar el modo claro /
+ * oscuro y la escala de texto (--rx-fs-*). La ficha (.iva-ficha) es la
+ * excepción: siempre blanca, porque es la imagen que recibe el cliente.
+ */
+.iva-root {
+  --iva-pay: var(--rx-red);
+  --iva-favor: var(--rx-green);
+  --iva-warn: var(--rx-amber);
+  font-size: var(--rx-fs-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.iva-root button,
+.iva-root input,
+.iva-root select,
+.iva-root textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.iva-root input,
+.iva-root select,
+.iva-root textarea {
+  border: 1px solid var(--rx-line);
+  border-radius: 8px;
+  background: var(--rx-surface);
+  padding: 9px 11px;
+  min-width: 0;
+}
+
+.iva-root input:focus-visible,
+.iva-root select:focus-visible,
+.iva-root textarea:focus-visible,
+.iva-root button:focus-visible,
+.iva-root tr.r:focus-visible {
+  outline: 2px solid var(--rx-brand);
+  outline-offset: 2px;
+}
+
+.iva-root .sub { font-size: var(--rx-fs-2xs); color: var(--rx-muted); }
+.iva-root .hint { font-size: var(--rx-fs-2xs); color: var(--rx-muted); margin-top: 4px; }
+.iva-root .pay { color: var(--iva-pay); font-weight: 700; }
+.iva-root .favor { color: var(--iva-favor); font-weight: 700; }
+
+/* Encabezado */
+.iva-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 18px;
+}
+.iva-head h1 { margin: 0; font-size: var(--rx-fs-2xl); font-weight: 800; letter-spacing: -0.01em; }
+.iva-head p { margin: 2px 0 0; color: var(--rx-muted); font-size: var(--rx-fs-xs); }
+
+.iva-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--rx-surface);
+  border: 1px solid var(--rx-line);
+  border-radius: 10px;
+}
+.iva-tabs button {
+  border: 0;
+  background: none;
+  padding: 7px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--rx-muted);
+  font-weight: 600;
+  font-size: var(--rx-fs-sm);
+}
+.iva-tabs button[aria-current="true"] { background: var(--rx-brand); color: #fff; }
+
+/* Botones */
+.iva-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rx-line);
+  background: var(--rx-surface);
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--rx-fs-sm);
+  text-decoration: none;
+  color: var(--rx-ink);
+}
+.iva-btn:hover { background: var(--rx-hover); }
+.iva-btn.primary { background: var(--rx-brand); border-color: var(--rx-brand); color: #fff; }
+.iva-btn.primary:hover { background: var(--rx-brand-dark); }
+.iva-btn.sm { padding: 5px 10px; font-size: var(--rx-fs-xs); }
+.iva-btn:disabled { opacity: 0.5; cursor: default; }
+.iva-linkbtn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--rx-brand);
+  cursor: pointer;
+  font-size: var(--rx-fs-2xs);
+  font-weight: 600;
+  text-decoration: underline;
+}
+.iva-iconbtn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--rx-line);
+  background: var(--rx-surface);
+  cursor: pointer;
+}
+
+.iva-panel {
+  background: var(--rx-surface);
+  border: 1px solid var(--rx-line);
+  border-radius: 12px;
+}
+.iva-error { padding: 14px 16px; margin-bottom: 14px; color: var(--iva-pay); }
+.iva-empty { padding: 36px 20px; text-align: center; color: var(--rx-muted); }
+.iva-stack { display: grid; gap: 18px; }
+.iva-pad { padding: 0 16px 16px; }
+
+/* Período */
+.iva-period { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.iva-period .lbl { font-size: var(--rx-fs-2xs); color: var(--rx-muted); }
+.iva-period strong { display: block; font-size: var(--rx-fs-xl); font-weight: 700; min-width: 9.5em; text-align: center; }
+.iva-period .iva-refresh { margin-left: auto; }
+
+/* Franja de días: el elemento característico de la app original */
+.iva-strip {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.iva-day {
+  border-radius: 10px;
+  padding: 10px 10px 9px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  text-align: left;
+  min-width: 0;
+}
+.iva-day[aria-pressed="true"] { border-color: var(--rx-ink); }
+.iva-day.past { opacity: 0.55; }
+.iva-day .d { font-size: calc(26px * var(--ui-font-scale, 1)); font-weight: 800; line-height: 1; }
+.iva-day .w,
+.iva-day .n { font-size: var(--rx-fs-2xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iva-day .w { opacity: 0.85; margin-top: 2px; }
+.iva-day .n { margin-top: 8px; font-weight: 600; }
+@media (max-width: 760px) {
+  .iva-strip { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* Filtros */
+.iva-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.iva-filters input[type="search"] { flex: 1; min-width: 200px; max-width: 340px; }
+.iva-chip {
+  border: 1px solid var(--rx-line);
+  background: var(--rx-surface);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: var(--rx-fs-2xs);
+  font-weight: 600;
+  color: var(--rx-muted);
+}
+.iva-chip[aria-pressed="true"] { background: var(--rx-ink); color: var(--rx-surface); border-color: var(--rx-ink); }
+.iva-push { margin-left: auto; }
+
+/* Lista */
+.iva-list { overflow-x: auto; }
+.iva-rows { width: 100%; border-collapse: collapse; min-width: 720px; }
+.iva-rows th {
+  font-size: var(--rx-fs-2xs);
+  font-weight: 600;
+  color: var(--rx-muted);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--rx-line);
+}
+.iva-rows td { padding: 6px 12px; height: 54px; border-bottom: 1px solid var(--rx-line); }
+.iva-rows tr.r { cursor: pointer; }
+.iva-rows tr.r:hover td { background: var(--rx-soft); }
+.iva-rows td.band { padding: 0; width: 8px; }
+.iva-rows td.band span { display: block; width: 8px; height: 54px; }
+.iva-rows .num { text-align: right; white-space: nowrap; }
+.iva-rows .name { font-weight: 600; }
+
+.iva-tag {
+  display: inline-block;
+  font-size: var(--rx-fs-2xs);
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.iva-tag.pend { background: var(--rx-amber-soft); color: var(--iva-warn); }
+.iva-tag.env { background: var(--rx-brand-soft); color: var(--rx-brand); }
+.iva-tag.pres { background: var(--rx-green-soft); color: var(--iva-favor); }
+.iva-tag.none { background: var(--rx-soft); color: var(--rx-muted); }
+.iva-tag.exc { background: var(--rx-red-soft); color: var(--iva-pay); margin-left: 6px; vertical-align: 1px; }
+
+/* Editor */
+.iva-ehead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.iva-ehead h2 { margin: 0; font-size: var(--rx-fs-xl); }
+.iva-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 18px;
+  align-items: start;
+}
+.iva-editor > * { min-width: 0; }
+@media (max-width: 1180px) {
+  .iva-editor { grid-template-columns: minmax(0, 1fr); }
+}
+.iva-form { padding: 18px; }
+.iva-meta,
+.iva-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+}
+.iva-meta { padding: 14px; border-radius: 10px; background: var(--rx-soft); margin-bottom: 18px; }
+.iva-root .f label,
+.iva-morag label,
+.iva-wa {
+  display: block;
+  font-size: var(--rx-fs-2xs);
+  margin-bottom: 4px;
+  color: var(--rx-muted);
+}
+.iva-root .f input,
+.iva-root .f select { width: 100%; }
+.iva-fields .f input { text-align: right; }
+.iva-mt { margin-top: 6px; text-align: right; }
+
+.iva-notebox {
+  border: 1px solid color-mix(in srgb, var(--iva-warn) 45%, var(--rx-line));
+  background: var(--rx-amber-soft);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+}
+.iva-notebox h3 { margin: 0 0 6px; font-size: var(--rx-fs-xs); color: var(--iva-warn); }
+.iva-notebox textarea { width: 100%; min-height: 70px; resize: vertical; }
+.iva-notebox .iva-wa { margin-top: 10px; }
+.iva-notebox input { width: min(100%, 240px); }
+
+.iva-chk {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px dashed var(--rx-line);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--rx-fs-sm);
+}
+.iva-root .iva-chk input { width: 18px; height: 18px; flex: none; padding: 0; }
+
+.iva-rubro {
+  background: var(--rx-brand-dark);
+  color: var(--rx-surface);
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: var(--rx-fs-sm);
+  margin: 28px 0 12px;
+}
+.iva-rubro.first { margin-top: 6px; }
+.iva-subh { font-size: var(--rx-fs-xs); font-weight: 700; color: var(--rx-muted); margin: 18px 0 8px; }
+
+.iva-cat {
+  border: 1px solid var(--rx-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  background: var(--rx-surface);
+}
+.iva-cat .cat-h { display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.iva-cat .cas { font-size: var(--rx-fs-2xs); font-weight: 700; color: var(--rx-muted); min-width: 68px; }
+.iva-cat .cat-t { font-weight: 600; flex: 1; min-width: 200px; }
+.iva-cat .cat-sum { font-size: var(--rx-fs-xs); font-weight: 700; color: var(--rx-brand); }
+.iva-cat .arow { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+.iva-cat .arow.libro { flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px dashed var(--rx-line); }
+.iva-cat .amt { flex: 1; text-align: right; }
+.iva-cat .arow.libro .amt { flex: none; width: 150px; }
+.iva-cat .dt { width: 150px; flex: none; }
+.iva-cat .nm { width: 168px; flex: none; }
+.iva-cat .tc { flex: 1; min-width: 190px; }
+.iva-cat .ivasel { width: 150px; flex: none; }
+.iva-cat .exen { width: 150px; text-align: center; flex: none; }
+.iva-cat .x {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--rx-line);
+  border-radius: 8px;
+  background: var(--rx-surface);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--iva-pay);
+}
+.iva-cat .addrow { margin-top: 2px; }
+@media (max-width: 560px) {
+  .iva-cat .arow { flex-wrap: wrap; }
+  .iva-cat .amt,
+  .iva-cat .arow.libro .amt { flex: 1 1 100%; width: auto; }
+  .iva-cat .ivasel,
+  .iva-cat .exen,
+  .iva-cat .dt,
+  .iva-cat .nm { flex: 1 1 auto; width: auto; }
+}
+
+.iva-totrow {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px 16px;
+  flex-wrap: wrap;
+  padding: 11px 14px;
+  background: var(--rx-soft);
+  border-radius: 8px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.iva-tblw { overflow-x: auto; }
+.iva-tbl { width: 100%; border-collapse: collapse; border: 1px solid var(--rx-line); }
+.iva-tbl td { padding: 8px 10px; border-bottom: 1px solid var(--rx-line); font-size: var(--rx-fs-sm); vertical-align: middle; }
+.iva-tbl td.cas { width: 62px; font-size: var(--rx-fs-2xs); font-weight: 700; color: var(--rx-muted); white-space: nowrap; }
+.iva-tbl td.num { white-space: nowrap; text-align: right; width: 1%; }
+.iva-tbl tr.strong td { font-weight: 700; background: var(--rx-soft); }
+.iva-tbl .amt.sm { width: 170px; text-align: right; }
+
+.iva-group { margin-top: 22px; }
+.iva-group h3 { font-size: var(--rx-fs-xs); font-weight: 700; color: var(--rx-muted); margin: 0 0 8px; }
+.iva-group input { width: 100%; }
+
+/* Ficha que recibe el cliente: colores fijos en cualquier tema */
+.iva-side { position: sticky; top: 76px; }
+@media (max-width: 1180px) {
+  .iva-side { position: static; }
+}
+.iva-ficha {
+  background: #fff;
+  color: #14213a;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #d6dee4;
+  font-family: "Public Sans", Inter, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.iva-ficha .fh { padding: 18px 20px 16px; }
+.iva-ficha .per { font-size: 13px; font-weight: 600; opacity: 0.9; }
+.iva-ficha .cl { font-size: 21px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+.iva-ficha .ruc { font-size: 13px; opacity: 0.9; margin-top: 2px; }
+.iva-ficha .body { padding: 6px 20px 4px; }
+.iva-ficha .sec { font-size: 12px; font-weight: 700; color: #5a6878; margin: 12px 0 4px; }
+.iva-ficha .ln { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid #edf1f4; font-size: 14px; }
+.iva-ficha .res { margin: 12px 0 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.iva-ficha .res .k { font-size: 13px; font-weight: 700; }
+.iva-ficha .res .v { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; }
+.iva-ficha .venc { padding: 12px 20px 16px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid #edf1f4; }
+.iva-ficha .venc b { font-weight: 800; }
+.iva-ficha .pie { padding: 0 20px 14px; font-size: 11.5px; color: #5a6878; }
+.iva-ficha .pie.firma { text-align: center; font-weight: 700; color: #14213a; }
+.iva-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* Configuración */
+.iva-settings h2 { font-size: var(--rx-fs-lg); margin: 0; padding: 16px 16px 0; }
+.iva-settings p { margin: 6px 16px 0; color: var(--rx-muted); font-size: var(--rx-fs-sm); max-width: 70ch; }
+.iva-settings textarea {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 12px 16px 16px;
+  min-height: 180px;
+  font-size: var(--rx-fs-sm);
+}
+.iva-settings > .iva-panel:only-child,
+.iva-panel.iva-settings { padding-bottom: 16px; }
+.iva-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; padding: 16px; }
+.iva-colors .c { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--rx-line); border-radius: 10px; }
+.iva-colors .name { font-weight: 600; font-size: var(--rx-fs-xs); }
+.iva-root .iva-colors input[type="color"] { width: 42px; height: 42px; border: 0; padding: 0; background: none; cursor: pointer; flex: none; }
+.iva-root .iva-colors input[type="text"] { width: 96px; padding: 5px 8px; font-size: var(--rx-fs-2xs); margin-top: 4px; }
+.iva-morag { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 16px; }
+.iva-morag input { width: 100%; text-align: right; }
+.iva-morag input.left { text-align: left; }
+
+.iva-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 300;
+  max-width: calc(100% - 32px);
+  background: var(--rx-ink);
+  color: var(--rx-surface);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: var(--rx-fs-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.iva-toast.show { opacity: 1; }
+
+@media (max-width: 560px) {
+  .iva-period strong { min-width: 0; }
+  .iva-filters input[type="search"] { max-width: none; }
+  .iva-push { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .iva-toast { transition: none; }
+}
+
+/* Modal "Copiar a Marangatu" */
+.iva-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 22, 35, 0.55);
+}
+.iva-modal {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--rx-surface);
+  color: var(--rx-ink);
+  border: 1px solid var(--rx-line);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+.iva-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid var(--rx-line);
+}
+.iva-modal-head h2 { margin: 0; font-size: var(--rx-fs-lg); }
+.iva-modal-head .sub { margin: 2px 0 0; }
+.iva-modal-body { padding: 14px 18px; overflow: auto; }
+.iva-modal-list { max-height: 46vh; overflow: auto; margin-top: 8px; }
+.iva-modal-alert { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--rx-red-soft); }
+.iva-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid var(--rx-line);
+}
+.iva-chk.sm { padding: 8px 12px; font-size: var(--rx-fs-xs); margin: 0; }
+.iva-steps { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: var(--rx-fs-sm); }
+
+.iva-conteo { margin: 0 0 8px; }
+.iva-ref { margin: 6px 0 0; padding: 6px 10px; border-radius: 8px; background: var(--rx-amber-soft); font-size: var(--rx-fs-xs); }
+.iva-avisos { margin: 10px 0 0; padding-left: 18px; font-size: var(--rx-fs-2xs); color: var(--rx-muted); display: grid; gap: 4px; }
+
+/* Modal "Descargar formularios" */
+.iva-dl-ops { display: grid; gap: 8px; margin: 0 0 8px; }
+.iva-dl-ops .iva-chk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.iva-dl-ops select,
+.iva-dl-ops input[type="month"] {
+  padding: 6px 8px;
+  border: 1px solid var(--rx-line);
+  border-radius: 8px;
+  background: var(--rx-surface);
+  color: var(--rx-ink);
+  font: inherit;
+}
+.iva-prog { height: 8px; border-radius: 99px; background: var(--rx-line); overflow: hidden; margin: 8px 0 4px; }
+.iva-prog > div { height: 100%; background: var(--rx-brand); transition: width 0.3s; }
+.iva-ok { color: var(--rx-brand); font-weight: 600; margin: 0 0 8px; }
+@media (prefers-reduced-motion: reduce) { .iva-prog > div { transition: none; } }
+
+/* Botón de WhatsApp con selector de destino (Web / app de escritorio) */
+.iva-wa-grupo { display: inline-flex; align-items: stretch; }
+.iva-wa-grupo .iva-btn-wa { border-top-right-radius: 0; border-bottom-right-radius: 0; background: #1f8f4e; border-color: #1f8f4e; color: #fff; }
+.iva-wa-grupo .iva-btn-wa:hover { background: #18753f; }
+.iva-root .iva-wa-destino { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left: 0; padding: 6px 8px; font-size: var(--rx-fs-2xs); }

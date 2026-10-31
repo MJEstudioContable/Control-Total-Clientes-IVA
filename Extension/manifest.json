@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Ekuatia Login",
+  "version": "2.7",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyMDranhrfclMlSvYWS0T7Pdol3hCXB3+hQxQge2X0ActDUa7Y8Mo7CrSa3BkdJMJFtpIl3yfArXmw30jzmffSuUy7YhshauOwtWrmkbpYWzAdn731BzN2AmnFyR/IuzRA550En+djM+CTy0OTkGrcyqFQgaU+tL0u3vTZ1YaBHcpBdylGWV7t4yglkgVY3HfcRtN+vRfImIyB0fNAXT0vRU5iUDvVN3TQDfFnPq/B3ECR8WYL1TUkgjTauREZBydgPdMk/NgkFaZVyZhZzSbJeu13oxQYOKoxEAj2znPea/tYv/nXcgFW0Sy7ggSwbwR460yKyV/gRYzHSipSEoEIwIDAQAB",
+  "description": "Puente de Control Clientes: login y Formulario 120 en Marangatu, descarga de formularios IVA y envío de la ficha por WhatsApp Web",
+  "permissions": [
+    "scripting",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://marangatu.set.gov.py/*",
+    "https://web.whatsapp.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Ekuatia Login",
+    "default_popup": "popup.html",
+    "default_icon": "logo.png"
+  },
+  "icons": {
+    "128": "logo.png"
+  },
+  "externally_connectable": {
+    "matches": [
+      "http://localhost/*",
+      "https://control-clientes-iva.vercel.app/*"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://marangatu.set.gov.py/*"
+      ],
+      "js": [
+        "descargaContent.js",
+        "paginas.js",
+        "relevamientoNav.js",
+        "panelContent.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

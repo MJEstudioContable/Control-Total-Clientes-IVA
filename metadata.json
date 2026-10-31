@@ -1,0 +1,6 @@
+{
+  "name": "Control Remoto Clientes",
+  "description": "Control remoto de la planilla de clientes - Sheets Remote App",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

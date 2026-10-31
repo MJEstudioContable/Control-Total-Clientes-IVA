@@ -1,0 +1,12 @@
+{
+  "appId": "com.sheetsremote.app",
+  "appName": "Control Clientes",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK",
+      "insetsHandling": "css"
+    }
+  }
+}

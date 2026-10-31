@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Extension/clientes.csv
+
+# Variables de entorno locales (no subir al repo)
+.env
+.env.*
+!.env.example
+
+# Claves privadas (p. ej. la de la extensión): nunca al repositorio
+*.pem

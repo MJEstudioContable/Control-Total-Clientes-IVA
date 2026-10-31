@@ -1,0 +1,2547 @@
+:root {
+  --bg-app: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-navbar: rgba(255, 255, 255, 0.92);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --primary-border: #93c5fd;
+  
+  --success: #10b981;
+  --success-hover: #059669;
+  --success-light: #ecfdf5;
+  --success-border: #6ee7b7;
+  
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --danger-border: #fca5a5;
+
+  --warning: #f59e0b;
+  --warning-light: #fffbe2;
+
+  --border-light: #cbd5e1;
+  --border-focus: #2563eb;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.12), 0 2px 6px -1px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 10px 25px -3px rgba(15, 23, 42, 0.15), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Preferencia global de tamaño de texto (Configuración → Tamaño de
+     texto). App.jsx escribe data-font-scale en <html> y persiste la
+     elección; los tokens tipográficos del tema ejecutivo se multiplican
+     por este factor. "Normal" es el tamaño de referencia del diseño. */
+  --ui-font-scale: 1;
+}
+
+html[data-font-scale="compacto"] { --ui-font-scale: 0.92; }
+html[data-font-scale="normal"] { --ui-font-scale: 1; }
+html[data-font-scale="grande"] { --ui-font-scale: 1.12; }
+html[data-font-scale="extra"] { --ui-font-scale: 1.25; }
+
+[data-theme="dark"] {
+  --bg-app: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --bg-input: #0f172a;
+  --bg-navbar: rgba(15, 23, 42, 0.92);
+  --text-main: #f8fafc;
+  --text-muted: #cbd5e1;
+  --text-subtle: #94a3b8;
+  
+  --primary: #38bdf8;
+  --primary-hover: #7dd3fc;
+  --primary-light: rgba(56, 189, 248, 0.18);
+  --primary-border: rgba(56, 189, 248, 0.45);
+  
+  --success: #34d399;
+  --success-hover: #6ee7b7;
+  --success-light: rgba(52, 211, 153, 0.18);
+  --success-border: rgba(52, 211, 153, 0.45);
+  
+  --danger: #f87171;
+  --danger-light: rgba(248, 113, 113, 0.18);
+  --danger-border: rgba(248, 113, 113, 0.45);
+
+  --warning: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.18);
+
+  --border-light: #334155;
+  --border-focus: #38bdf8;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* Red de seguridad: nada debería poder generar scroll horizontal en
+     mobile. Si algún elemento se pasa de ancho por error, esto evita que
+     la app entera "se corra" hacia un costado en vez de solo recortar
+     ese elemento puntual. */
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* App Shell Layout */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Splash de arranque (logo MJ Estudio Contable). El fondo oscuro
+   semitransparente deja entrever la app sin competir con el loader. */
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: #f8fafc;
+  padding: 24px 24px calc(24px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+}
+
+.splash-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  gap: 18px;
+}
+
+.splash-logo-wrap {
+  position: relative;
+  width: min(88vw, 360px);
+  height: min(88vw, 360px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: splashLogoFade 0.28s ease-out both;
+}
+
+/* Glow estático: conserva profundidad sin recalcular un blur grande en cada
+   frame, algo especialmente costoso en WebView y equipos con GPU modesta. */
+.splash-logo-glow {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(26, 155, 184, 0.32) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+@keyframes splashLogoFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.splash-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.splash-message {
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.splash-progress {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.splash-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.splash-progress-fill {
+  width: 42%;
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #1d4ed8 0%, #38bdf8 55%, #0ea5b7 100%);
+  animation: splashProgress 1.05s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes splashProgress {
+  from { transform: translate3d(-115%, 0, 0); }
+  to { transform: translate3d(340%, 0, 0); }
+}
+
+.app-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: var(--bg-navbar);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+  /* Con la app en modo edge-to-edge (obligatorio desde Android 15), el
+     contenido dibuja por debajo de la barra de estado del sistema. Desde
+     Capacitor 8.3+ el propio framework inyecta --safe-area-inset-top de
+     forma confiable (algunos WebView de Android tienen bugs con el
+     env() puro), por eso se lee esa variable primero y env() como
+     respaldo. En web/PWA normal ambos dan 0 y no cambia nada. */
+  padding: calc(12px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 16px 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.navbar-content {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: calc(16px * var(--ui-font-scale, 1));
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.brand-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: #000000;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.nav-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
+}
+
+.pill-btn:hover {
+  background-color: var(--bg-card-hover);
+  color: var(--text-main);
+  border-color: #cbd5e1;
+}
+
+.pill-btn.active {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary-border);
+}
+
+.avatar-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+/* Menú hamburguesa (solo mobile, ver media query 640px para mostrarlo) */
+/* En desktop el grupo izquierdo mobile no existe; el logo vive en .brand-badge */
+.mobile-nav-left {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-nav-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #000000;
+  flex-shrink: 0;
+}
+
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Backdrop de todo el drawer (cubre pantalla completa, cierra al tocar) */
+.mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(1px);
+}
+
+/* Drawer: entra deslizándose desde el borde izquierdo hacia la derecha,
+   cubre toda la altura de la pantalla por encima del navbar. Queda con
+   lugar (debajo del toggle de tema) para ir sumando más opciones. */
+.mobile-drawer-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 56;
+  width: 78%;
+  max-width: 280px;
+  background-color: var(--bg-card);
+  border-right: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md, 4px 0 24px rgba(0, 0, 0, 0.22));
+  padding: calc(14px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mobile-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.mobile-drawer-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(15px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.mobile-drawer-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #000000;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-main);
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-menu-item:hover,
+.mobile-menu-item:active {
+  background-color: var(--bg-card-hover);
+}
+
+/* Screen Wrapper */
+.screen {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  /* El padding-bottom extra es para el modo edge-to-edge: que el final
+     de cada pantalla no quede tapado por el área de gestos/barra de
+     navegación de Android. Ver nota de --safe-area-inset-top más arriba
+     sobre por qué se usa var()+env() combinados. */
+  padding: 24px 16px calc(40px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  flex: 1;
+  animation: fadeIn 0.1s ease-out;
+}
+
+.screen.wide {
+  max-width: 860px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: calc(100vh - 120px);
+}
+
+/* Picker & Welcome Screen Styles */
+.hero-card {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  padding: 32px 24px;
+  box-shadow: var(--shadow-md);
+  margin-bottom: 20px;
+}
+
+.picker-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 20px;
+  background: var(--primary-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: inset 0 0 0 1px var(--primary-border);
+}
+
+.picker-title {
+  font-size: calc(24px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.picker-subtitle {
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  color: var(--text-muted);
+  max-width: 340px;
+  margin: 0 auto 24px;
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.picker-list-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.year-row-btn {
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 16px 20px !important;
+  width: 100%;
+}
+
+.year-row-chevron {
+  color: var(--text-subtle);
+  transition: transform 0.1s ease, color 0.1s ease;
+}
+
+.year-row-btn:hover .year-row-chevron {
+  color: var(--primary);
+  transform: translateX(3px);
+}
+
+.picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 14px;
+  font-size: calc(15px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.1s ease, box-shadow 0.1s ease, color 0.1s ease;
+}
+
+.picker-btn:hover {
+  border-color: var(--primary-border);
+  background-color: var(--primary-light);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.picker-btn:active {
+  transform: translateY(0);
+}
+
+/* Autenticación individual */
+.auth-test-banner {
+  position: sticky;
+  top: 61px;
+  z-index: 39;
+  width: 100%;
+  padding: 7px 16px;
+  background-color: #fef3c7;
+  border-bottom: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  text-align: center;
+}
+
+[data-theme="dark"] .auth-test-banner {
+  background-color: #78350f;
+  border-bottom-color: #f59e0b;
+  color: #fef3c7;
+}
+
+.pin-change-notice {
+  width: 100%;
+  padding: 7px 16px;
+  background-color: #dcfce7;
+  border-bottom: 1px solid #86efac;
+  color: #14532d;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  text-align: center;
+}
+
+[data-theme="dark"] .pin-change-notice {
+  background-color: #14532d;
+  border-bottom-color: #22c55e;
+  color: #dcfce7;
+}
+
+.auth-screen {
+  width: 100%;
+}
+
+.auth-card {
+  width: min(100%, 420px);
+  margin: 0 auto;
+}
+
+.auth-icon-box {
+  color: var(--primary);
+}
+
+.auth-user-label strong {
+  color: var(--text-main);
+}
+
+.auth-setup-copy {
+  max-width: 320px;
+  margin: -4px auto 18px;
+  color: var(--text-muted);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+}
+
+.auth-checking-copy {
+  color: var(--text-muted);
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  padding: 12px 0;
+}
+
+.auth-pin-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.auth-error-banner {
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.auth-pin-label {
+  color: var(--text-muted);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  text-align: left;
+}
+
+.auth-pin-input {
+  width: 100%;
+  height: 54px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  outline: none;
+  background-color: var(--bg-input);
+  color: var(--text-main);
+  font-size: calc(26px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  letter-spacing: 14px;
+  text-align: center;
+  text-indent: 14px;
+}
+
+.auth-input-icon-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.auth-input-icon-wrap > svg {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  z-index: 1;
+  color: var(--text-subtle);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.auth-pin-input-with-icon {
+  padding-right: 42px;
+  padding-left: 42px;
+}
+
+.auth-pin-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.auth-pin-input:disabled {
+  opacity: 0.65;
+}
+
+.auth-pin-help {
+  min-height: 18px;
+  color: var(--text-subtle);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  text-align: left;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 2px;
+}
+
+.auth-change-user {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+}
+
+.auth-change-user:hover {
+  color: var(--primary);
+}
+
+.auth-change-user:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.field-readonly-value {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  font-size: calc(14px * var(--ui-font-scale, 1));
+}
+
+/* Skeleton Loading State */
+.skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.skeleton-item {
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: loadingPulse 1.5s infinite;
+}
+
+@keyframes loadingPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Topbar in Screens */
+.screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  color: var(--text-muted);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.back-btn:hover {
+  background-color: var(--bg-card-hover);
+  color: var(--text-main);
+}
+
+.search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-subtle);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 36px 10px 38px;
+  font-size: calc(15px * var(--ui-font-scale, 1));
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  outline: none;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.search-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--success);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  background-color: var(--success-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Rotación típica de "sincronizando" para el ícono de refresh. La
+   duración de 0.9s es la que se siente "activa" sin marear; linear para
+   que no acelere/frene en cada vuelta. */
+.spin {
+  animation: spin-rotate 0.9s linear infinite;
+}
+
+@keyframes spin-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.filter-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  margin-top: 2px;
+  border-top: 1px solid var(--border-light);
+}
+
+.filter-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.stats-bar-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.stats-bar-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-card-hover);
+  font-weight: 600;
+  color: var(--text-main);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Pantalla "Asignar clientes" (Super/Admin) */
+.assign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assign-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+}
+
+.assign-row-name {
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.assign-row-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Toolbar de acciones masivas (asignación rápida / round-robin) */
+.assign-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Envuelve buscador + toolbar + paneles + filtros de esta pantalla.
+   Sin esto, los .filter-row (que no traen su propio margen -- en la
+   lista principal viven dentro de una tarjeta con gap, acá no) quedaban
+   pegados unos contra otros y contra el contador de abajo. */
+.assign-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* Panel expandible de confirmación (round-robin) o selección de usuario
+   activo (asignación rápida). Mismo tono que las tarjetas para que se
+   sienta parte del flujo, no un popup aparte. */
+.assign-confirm-box {
+  overflow: hidden;
+  background-color: var(--bg-card-hover);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  color: var(--text-muted);
+}
+
+/* Con la asignación rápida activa, la fila entera se vuelve un botón
+   grande: tocar en cualquier parte (menos el select) asigna al toque. */
+.assign-row-quick {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.assign-row-quick:hover {
+  border-color: var(--primary-border);
+  background-color: var(--bg-card-hover);
+}
+
+/* Se pinta a medida que vas asignando clientes al usuario activo -- el
+   feedback visual inmediato es lo que hace que el modo rápido se sienta
+   como "ir marcando casillas" en vez de una lista ciega. */
+.assign-row-matched {
+  background-color: rgba(34, 197, 94, 0.14);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.assign-row-matched:hover {
+  background-color: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+/* Selector de encargado de cada fila (reemplazó al texto de solo lectura:
+   ahora se puede asignar a cualquiera del equipo, participe o no del
+   reparto). Hereda el cromo de .sort-select y se le acota el ancho para que
+   no se coma la fila: el nombre del cliente sigue siendo el protagonista. */
+.assign-row-select {
+  min-width: 132px;
+  max-width: 190px;
+  padding: 5px 8px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+}
+
+/* Sin encargado: apagado y en cursiva, mismo tratamiento que tenía el texto. */
+.assign-row-select.is-empty {
+  color: var(--text-subtle);
+  font-style: italic;
+}
+
+/* Versión "cerrada" del selector: un botón con el nombre del encargado y
+   una flecha que lo delata como desplegable. El <select> real se monta sólo
+   al tocarlo (una fila a la vez), así la lista no arrastra cientos de
+   desplegables con todo el equipo adentro -- y con showPicker() el primer
+   toque ya abre la lista, sin el doble toque de antes. */
+.assign-row-encargado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  text-align: left;
+}
+
+.assign-row-encargado .assign-row-encargado-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-row-encargado svg {
+  flex: 0 0 auto;
+  opacity: 0.5;
+}
+
+.assign-row-encargado.is-empty svg {
+  opacity: 0.35;
+}
+
+.assign-row-encargado:not(:disabled):hover {
+  border-color: var(--primary-border);
+  background-color: var(--bg-card-hover);
+}
+
+.assign-row-encargado:not(:disabled):hover svg {
+  opacity: 0.85;
+}
+
+.assign-row-encargado:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Agrupación visual por vencimiento (para ver el ciclo del round-robin) */
+.assign-group {
+  margin-bottom: 16px;
+}
+
+.assign-group-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  margin-bottom: 8px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.assign-group-count {
+  margin-left: auto;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  color: var(--text-subtle);
+  background-color: var(--bg-card-hover);
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* Empty & Error State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background-color: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  margin-bottom: 16px;
+}
+
+/* Recuperación ante errores de render en una pantalla puntual. */
+.screen-error-boundary {
+  width: 100%;
+}
+
+.screen-error-card {
+  width: min(100%, 420px);
+  margin: 0 auto;
+}
+
+.screen-error-card .picker-subtitle {
+  margin-bottom: 20px;
+}
+
+.screen-error-icon {
+  background-color: var(--danger-light);
+  color: var(--danger);
+  box-shadow: inset 0 0 0 1px var(--danger-border);
+}
+
+/* Field Grid & Cards */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.field-card {
+  position: relative;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.field-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--primary);
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.field-card:focus-within,
+.field-card-active {
+  border-color: var(--border-focus);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.12), 0 0 0 1px var(--primary-light);
+  transform: translateY(-2px);
+  background-color: var(--bg-card-hover);
+}
+
+.field-card:focus-within::before,
+.field-card-active::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.field-label-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-field-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-light);
+  color: var(--primary);
+  letter-spacing: 0.02em;
+  animation: slideInBadge 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInBadge {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.field-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.field-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-input);
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.field-input:focus {
+  background-color: var(--bg-card);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  transform: scale(1.005);
+}
+
+.field-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 14px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.field-save-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+.field-save-btn:disabled {
+  background-color: var(--border-light);
+  color: var(--text-subtle);
+  cursor: default;
+}
+
+.field-save-btn.saved {
+  background-color: var(--success);
+}
+
+/* YES / NO Toggle Switch Pair */
+.yesno-toggle-group {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.yesno-toggle-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-input);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.yesno-toggle-btn:hover {
+  border-color: var(--border-focus);
+  background-color: var(--bg-card-hover);
+}
+
+.yesno-toggle-btn.active-si {
+  background-color: var(--success-light);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+
+.yesno-toggle-btn.active-no {
+  background-color: var(--danger-light);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.select-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-input);
+  color: var(--text-main);
+  outline: none;
+}
+
+.select-input:focus {
+  background-color: var(--bg-card);
+  border-color: var(--border-focus);
+}
+
+/* Modal / Card Header Banner for Client Details */
+.client-detail-header {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.client-detail-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.client-detail-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  flex-shrink: 0;
+}
+
+.client-detail-title {
+  font-size: calc(20px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.client-detail-meta {
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  color: var(--text-muted);
+}
+
+.save-all-notice {
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  color: var(--text-muted);
+  background: var(--bg-app);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Footer / Action Bar */
+.bottom-submit-bar {
+  margin-top: 10px;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  font-size: calc(15px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-card-hover);
+}
+
+/* Spinner Icon Spin */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 130px;
+}
+
+.filter-pills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.filter-pill:hover {
+  border-color: var(--border-focus);
+  color: var(--text-main);
+}
+
+.filter-pill.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+/* Número de posición del equipo dentro del reparto automático. Va SIEMPRE
+   renderizado (no aparece/desaparece con hover) para que el pill no cambie
+   de tamaño, y es texto puro: sin íconos ni handle de arrastre. */
+.pill-order-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  min-height: 17px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-light, rgba(37, 99, 235, 0.12));
+  color: var(--primary);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.filter-pill.active .pill-order-num {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+/* Pills del equipo (los que se arrastran para ordenar el reparto).
+   touch-action: pan-y deja que la página siga scrolleando en vertical
+   aunque el dedo arranque arriba de un pill -- el arrastre nuestro es
+   horizontal, así las dos cosas conviven y nada queda trabado. */
+.team-pill {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grab;
+}
+
+/* Hueco que deja el nombre mientras se lo arrastra: sigue ocupando SU lugar
+   en la fila (así se ve dónde va a caer) pero atenuado. Solo cambia color y
+   opacidad, nunca el tamaño, para que la fila no salte. */
+.filter-pill.drag-origin {
+  opacity: 0.35;
+  border-style: dashed;
+  border-color: var(--primary);
+  cursor: grabbing;
+}
+
+/* Nombre que está debajo del puntero mientras se arrastra: es el que va a
+   intercambiar posición al soltar. Solo pinta borde/sombra, nunca tamaño,
+   así la fila no salta mientras el dedo se mueve por encima. */
+.filter-pill.swap-target {
+  border-color: var(--primary);
+  border-style: dashed;
+  color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light, rgba(37, 99, 235, 0.18));
+}
+
+/* Usuario que NO participa del reparto: se ve apagado y con el guion en vez
+   del número. Mismo tamaño de caja que los demás, así la fila no salta al
+   incluirlo o sacarlo. */
+.filter-pill.not-participant {
+  opacity: 0.45;
+  border-style: dashed;
+  text-decoration: line-through;
+}
+
+/* Botón de texto (sin íconos) para entrar/salir del modo participantes.
+   Usa el mismo cromo que los pills de la misma caja (.filter-pill /
+   .pill-btn) —fondo de tarjeta, borde redondeado total, igual padding y
+   tipografía— para que se lea como parte de la fila y no como un link
+   suelto. Todo por variables, así el tema oscuro queda cubierto. */
+.reorder-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  line-height: 1;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.reorder-mode-btn:hover {
+  border-color: var(--border-focus);
+  color: var(--text-main);
+}
+
+/* Modo participantes activo: el mismo resaltado suave de los pills
+   activos (.pill-btn.active), no el sólido de .filter-pill.active, para
+   que no compita con la selección de un nombre. */
+.reorder-mode-btn.active {
+  background-color: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+/* El conteo va en segundo plano respecto de la palabra "Participantes",
+   misma jerarquía que el número de los pills. */
+.reorder-mode-btn .mode-count {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Clon del nombre que sigue al dedo/mouse durante el arrastre. Vive en un
+   portal sobre document.body y se mueve por transform (GPU), así no
+   re-renderiza React en cada pixel del gesto. pointer-events:none para que
+   no intercepte clicks ni scroll mientras vuela. */
+.team-pill-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--primary);
+  background-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.4);
+  white-space: nowrap;
+  will-change: transform;
+  transform: translate3d(-9999px, -9999px, 0);
+}
+
+.team-pill-ghost .pill-order-num {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+/* Vencimiento filter pill: al pasar el mouse cambia de "Día X" al número de
+   terminación (0, 1, 2...).
+
+   IMPORTANTE: el pill NO puede cambiar de tamaño al hacer hover. Las dos
+   etiquetas viven en la MISMA celda de una grilla (grid-area: 1 / 1) y sólo
+   se cruzan con opacidad, así la caja la define siempre la más grande de las
+   dos. Antes se intercambiaban con display:none / inline-block y el pill
+   saltaba: la terminación usa 13px contra 12px del "Día X" (con line-height
+   1.5 son 19.5px contra 18px de alto) y el texto es mucho más corto, así que
+   además podía estrecharse cuando "Día NN" superaba el min-width. */
+.filter-pill-vencimiento {
+  display: inline-grid;
+  place-items: center;
+  min-width: 58px;
+  text-align: center;
+  position: relative;
+}
+
+.filter-pill-vencimiento .pill-day-label,
+.filter-pill-vencimiento .pill-digit-label {
+  grid-area: 1 / 1; /* misma celda: ninguna de las dos empuja el layout */
+}
+
+.filter-pill-vencimiento .pill-day-label {
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.filter-pill-vencimiento .pill-digit-label {
+  font-weight: 700;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.filter-pill-vencimiento:hover .pill-day-label,
+.filter-pill-vencimiento:focus-visible .pill-day-label {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.filter-pill-vencimiento:hover .pill-digit-label,
+.filter-pill-vencimiento:focus-visible .pill-digit-label {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.sort-select {
+  padding: 5px 12px;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  outline: none;
+  cursor: pointer;
+}
+
+/* User Stamps & Assignment Badges on Client Card */
+.stamps-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Botón Marangatu en la tarjeta: logo sobre fondo blanco, como pide el
+   diseño. Compacto para no desbalancear la fila de acciones rápidas. */
+.marangatu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: box-shadow 0.1s ease, transform 0.1s ease;
+}
+
+.marangatu-btn:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* El logo original es alto (isotipo + texto); lo recortamos al isotipo con
+   object-fit para que el botón quede cuadrado y prolijo. */
+.marangatu-logo {
+  height: 24px;
+  width: 24px;
+  object-fit: cover;
+  object-position: 50% 18%;
+  display: block;
+  border-radius: 4px;
+}
+
+/* Acceso directo a la liquidación del cliente en Vencimientos IVA. */
+.iva-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 10px;
+  background: transparent;
+  color: inherit;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  cursor: pointer;
+  transition: box-shadow 0.1s ease, transform 0.1s ease;
+}
+
+.iva-open-btn:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.user-stamp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border-radius: 4px;
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+
+.user-stamp-badge.presentado {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.user-stamp-badge.archivado {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+/* Modal Overlay & Card */
+.team-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.team-modal {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  max-width: 460px;
+  width: 100%;
+  padding: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+.team-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.team-modal-title {
+  font-size: calc(16px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.team-modal-close:hover {
+  color: var(--text-main);
+}
+
+.pin-change-intro {
+  color: var(--text-muted);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  line-height: 1.5;
+  margin: -4px 0 14px;
+}
+
+.settings-modal .auth-pin-input {
+  height: 48px;
+  font-size: calc(22px * var(--ui-font-scale, 1));
+  letter-spacing: 12px;
+  text-indent: 12px;
+}
+
+.settings-modal {
+  max-width: 420px;
+}
+
+.settings-title-with-back {
+  gap: 6px;
+}
+
+.settings-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.settings-back-btn:hover {
+  color: var(--text-main);
+}
+
+.settings-section {
+  padding: 14px 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.settings-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.settings-section-title {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card-hover);
+  color: var(--text-main);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-action:hover {
+  border-color: var(--primary-border);
+  background-color: var(--bg-card);
+  color: var(--primary);
+}
+
+.settings-action svg {
+  flex-shrink: 0;
+}
+
+.settings-theme-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.settings-theme-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-theme-option:hover {
+  border-color: var(--primary-border);
+  color: var(--text-main);
+}
+
+.settings-theme-option.is-active {
+  background-color: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+/* Tamaño de texto: mismo lenguaje visual que el selector de tema. */
+.settings-subsection {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+}
+
+.settings-subsection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.settings-subsection-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-main);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+}
+
+/* Muestra en vivo el tamaño elegido, sin depender de la escala global
+   (así se puede comparar una opción con otra antes de aplicarla). */
+.settings-font-preview {
+  min-width: 42px;
+  padding: 2px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: center;
+  transition: font-size 0.14s ease;
+}
+
+.settings-font-preview[data-scale="compacto"] { font-size: 12px; }
+.settings-font-preview[data-scale="normal"] { font-size: 14px; }
+.settings-font-preview[data-scale="grande"] { font-size: 16px; }
+.settings-font-preview[data-scale="extra"] { font-size: 18px; }
+
+.settings-font-options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.settings-font-option {
+  min-height: 40px;
+  padding: 0 4px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+
+.settings-font-option:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.settings-font-option.is-active {
+  background-color: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
+}
+
+.settings-note {
+  margin: 8px 2px 0;
+  color: var(--text-subtle);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  line-height: 1.45;
+}
+
+.settings-pin-form {
+  max-width: none;
+}
+
+/* Indicador discreto de la cola de guardado en memoria */
+.sync-queue-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  color: var(--primary);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Panel exclusivo de gestión de usuarios (SUPERUSUARIO) */
+.settings-admin-users {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.settings-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.settings-admin-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+  color: var(--text-muted);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-admin-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background-color: var(--success-light);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+  font-weight: 600;
+}
+
+.settings-admin-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 12px;
+  color: var(--text-muted);
+  font-size: calc(13px * var(--ui-font-scale, 1));
+}
+
+.settings-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-admin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+}
+
+.settings-admin-card.is-inactive {
+  opacity: 0.72;
+  background-color: var(--bg-card-hover);
+}
+
+.settings-admin-user-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.settings-admin-user-name {
+  font-size: calc(14px * var(--ui-font-scale, 1));
+  color: var(--text-main);
+}
+
+.settings-admin-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.settings-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-card-hover);
+  color: var(--text-muted);
+}
+
+.settings-admin-badge.active {
+  background-color: var(--success-light);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+
+.settings-admin-badge.inactive {
+  background-color: var(--danger-light);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+
+.settings-admin-badge.temp-pin {
+  background-color: var(--warning-light);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.settings-admin-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.settings-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card-hover);
+  color: var(--text-main);
+  font-size: calc(12px * var(--ui-font-scale, 1));
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.settings-admin-btn.danger {
+  color: var(--danger);
+  border-color: var(--danger-border);
+  background-color: var(--danger-light);
+}
+
+.settings-admin-btn.success {
+  color: var(--success);
+  border-color: var(--success-border);
+  background-color: var(--success-light);
+}
+
+.settings-admin-reset-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-light);
+}
+
+.settings-admin-pin-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-admin-save-pin {
+  padding: 8px 14px;
+  min-height: 38px;
+}
+
+@media (max-width: 640px) {
+  /* Enforce 16px minimum font-size on mobile inputs to prevent iOS automatic zoom */
+  input[type="text"],
+  input[type="search"],
+  select,
+  textarea,
+  .search-input,
+  .field-input,
+  .select-input {
+    font-size: max(16px, calc(16px * var(--ui-font-scale, 1))) !important;
+  }
+
+  .screen {
+    padding: 10px 10px calc(28px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+
+  .app-navbar {
+    padding: calc(6px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 10px 6px;
+  }
+
+  .navbar-content {
+    padding: 0;
+  }
+
+  /* Con el logo/texto "Control Clientes" oculto en mobile (via
+     .hide-mobile en App.jsx), .nav-pills pasa a ocupar todo el ancho
+     disponible. El toggle de tema se oculta acá (.hide-mobile) porque
+     vive adentro del menú hamburguesa (izquierda): así la píldora de
+     período (el mes) queda centrada y bien visible, con el botón de
+     menú a la izquierda y la píldora de usuario a la derecha. */
+  .nav-pills {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .brand-badge {
+    font-size: calc(14px * var(--ui-font-scale, 1));
+    gap: 6px;
+  }
+
+  .brand-icon-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand-icon-wrapper svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .pill-btn {
+    padding: 4px 8px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+
+  /* La píldora de período pasa a ser el elemento protagonista de la
+     barra en mobile: ocupa el espacio disponible y se centra. */
+  .period-pill {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+  }
+
+  /* Nombres largos ya no rompen a 2 líneas contra el borde: se truncan
+     con "..." y el pill de usuario queda siempre en una sola línea. */
+  .nav-user-name {
+    max-width: 92px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-nav-left {
+    display: flex;
+  }
+
+  .mobile-nav-logo {
+    display: block;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .screen-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .search-input {
+    padding: 8px 30px 8px 32px;
+    min-height: 38px;
+  }
+
+  .search-icon {
+    left: 10px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .btn-primary {
+    padding: 8px 12px;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+    min-height: 38px;
+  }
+
+  
+
+  /* Oculta info redundante en mobile (ej: el período repetido, que ya
+     está en la píldora del navbar) sin tocar nada en desktop. */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  
+
+  
+
+  
+
+  .filter-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .filter-label {
+    min-width: auto;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    font-weight: 700;
+  }
+
+  .filter-pills {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-pill {
+    padding: 3px 8px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Acompaña el mismo achique que los pills de al lado, para que el botón
+     "Participantes" no quede más grande que la fila que comanda. */
+  .reorder-mode-btn {
+    padding: 3px 8px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+
+  .sort-select {
+    padding: 3px 8px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    min-height: 32px;
+  }
+
+  .stamps-row {
+    gap: 4px;
+  }
+
+  .user-stamp-badge {
+    padding: 2px 6px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+
+  .hero-card {
+    padding: 16px 12px;
+  }
+
+  .picker-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .picker-btn {
+    padding: 10px 8px;
+    min-height: 42px;
+  }
+
+  .year-row-btn {
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .field-card {
+    padding: 10px;
+  }
+
+  .field-input-row {
+    gap: 6px;
+  }
+
+  .field-input {
+    min-height: 38px;
+  }
+
+  .field-save-btn {
+    min-height: 38px;
+    padding: 0 12px;
+    min-width: 70px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+
+  .yesno-toggle-btn {
+    min-height: 38px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+  }
+
+  .select-input {
+    min-height: 38px;
+  }
+
+  .client-detail-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .client-detail-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .client-detail-title {
+    font-size: calc(16px * var(--ui-font-scale, 1));
+  }
+
+  .bottom-submit-bar {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .bottom-submit-bar .btn-primary,
+  .bottom-submit-bar .btn-secondary {
+    width: 100%;
+    min-height: 42px;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+  }
+
+  /* Pantalla "Asignar clientes" en mobile: el nombre y el control
+     (select o "encargado actual") competían por la misma fila angosta y
+     el nombre se cortaba con "...". Acá se apilan: el nombre arriba con
+     todo su ancho disponible (puede pasar a 2 líneas si hace falta), el
+     control abajo ocupando todo el ancho también. */
+  .assign-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .assign-row-name {
+    white-space: normal;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+  }
+
+  .assign-row-control {
+    justify-content: flex-end;
+  }
+
+  .assign-row-control .sort-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Los pills de "Estado"/"Vencimiento" con nombres largos (ej. "ANTONIO
+     GONZALEZ") necesitan más aire entre líneas al envolver, si no se
+     ven amontonados. */
+  .assign-controls .filter-pills {
+    row-gap: 8px;
+  }
+}
+
+@media (max-width: 440px) {
+
+  .btn-primary {
+    width: 100%;
+  }
+
+  
+
+  .picker-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Hueco mientras se descarga el chunk de una pantalla lazy (Suspense).
+   Reserva alto para que el layout no salte; la pantalla trae su propio
+   esqueleto o spinner en cuanto llega. */
+.lazy-screen-fallback {
+  min-height: 40vh;
+}
