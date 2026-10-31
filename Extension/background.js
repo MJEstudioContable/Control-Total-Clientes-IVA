@@ -31,7 +31,7 @@ const MAX_CASILLAS = 120;
 // Vercel (otro subdominio en cada deploy) no se agregan a propósito.
 const ALLOWED_APP_ORIGINS = new Set([
   'http://localhost:3000',
-  'https://control-clientes-iva.vercel.app',
+  'https://control-total-clientes.vercel.app',
 ]);
 
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
