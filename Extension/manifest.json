@@ -27,7 +27,7 @@
   "externally_connectable": {
     "matches": [
       "http://localhost/*",
-      "https://control-clientes-iva.vercel.app/*"
+      "https://control-total-clientes.vercel.app/*"
     ]
   },
   "content_scripts": [
