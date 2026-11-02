@@ -4,7 +4,7 @@ import { Upload } from 'lucide-react';
 import { api } from '../api';
 import './marcaciones.css';
 import {
-  DIAS, calcularEmpleados, clearLocalConfig, fmtMin, leerExcel, loadConfig, normalizeConfig, saveConfig, signed, tone,
+  DIAS, calcularEmpleados, clearLocalConfig, fmtMin, leerAttlog, loadConfig, normalizeConfig, saveConfig, signed, tone,
 } from './marcacionesCore';
 import {
   guardarPlanilla, leerPlanilla, quitarPlanilla, recordarActivo, setRecordar,
@@ -16,7 +16,7 @@ const origen = (v) => (v ? `${v > 0 ? '+' : '−'}${Math.abs(v)}` : '·');
 
 // Sólo ADMINISTRADOR y SUPERUSUARIO llegan acá (App.jsx filtra la pestaña con
 // canAssignClients) y el backend vuelve a validar el rol al leer y guardar los
-// horarios. El Excel se procesa en el navegador: no se envía a ningún lado y
+// horarios. El archivo .dat se procesa en el navegador: no se envía a ningún lado y
 // las marcaciones se descartan al salir de la pestaña. Sólo los horarios se
 // guardan en el servidor (si no hay conexión, quedan en este dispositivo).
 export default function MarcacionesModule({ withDesktopSidebar = false }) {
@@ -41,11 +41,12 @@ export default function MarcacionesModule({ withDesktopSidebar = false }) {
     () => (mes ? calcularEmpleados(regs, mes, cfg).sort((a, b) => a.nom.localeCompare(b.nom)) : []),
     [regs, mes, cfg],
   );
-  const delArchivo = useMemo(() => {
-    const seen = new Map();
-    regs.forEach((r) => seen.set(r.id, r.nom));
-    return [...seen].map(([id, nom]) => ({ id, nom })).sort((a, b) => a.nom.localeCompare(b.nom));
-  }, [regs]);
+  const delArchivo = useMemo(
+    () => [...new Set(regs.map((r) => r.id))]
+      .map((id) => ({ id, nom: (cfg.emp[id]?.nom || '').trim() || id }))
+      .sort((a, b) => a.nom.localeCompare(b.nom)),
+    [regs, cfg],
+  );
 
   const updateCfg = useCallback((fn) => {
     dirtyRef.current = true;
@@ -128,11 +129,11 @@ export default function MarcacionesModule({ withDesktopSidebar = false }) {
     if (!file) return;
     setError('');
     try {
-      const { registros, ignoradas } = await leerExcel(await file.arrayBuffer());
-      if (!registros.length) throw new Error('No se encontraron marcaciones en el archivo.');
+      const { registros, ignoradas } = leerAttlog(await file.text());
+      if (!registros.length) throw new Error('no se encontraron marcaciones. Subí el archivo .dat que exporta el reloj.');
       const ms = [...new Set(registros.map((r) => r.f.slice(0, 7)))].sort();
       const texto = `${file.name}: ${registros.length} marcaciones de ${new Set(registros.map((r) => r.id)).size} empleados`
-        + (ignoradas ? ` (${ignoradas} fila(s) ignoradas)` : '');
+        + (ignoradas ? ` (${ignoradas} línea(s) ignoradas)` : '');
       const ultimo = ms[ms.length - 1];
       setRegs(registros);
       setMes(ultimo);
@@ -177,10 +178,10 @@ export default function MarcacionesModule({ withDesktopSidebar = false }) {
         <div className="mrc-toolbar-main">
           <label className="mrc-btn primary">
             <Upload size={16} />
-            <span>{regs.length ? 'Cambiar Excel' : 'Subir Excel de marcaciones'}</span>
-            <input type="file" accept=".xlsx,.xls" onChange={onFile} hidden />
+            <span>{regs.length ? 'Cambiar archivo' : 'Subir archivo .dat del reloj'}</span>
+            <input type="file" accept=".dat,.txt" onChange={onFile} hidden />
           </label>
-          <p className="mrc-file">{info || 'Subí el reporte del reloj para calcular los saldos.'}</p>
+          <p className="mrc-file">{info || 'Subí el archivo .dat del reloj para calcular los saldos.'}</p>
           {meses.length > 0 && (
             <label className="mrc-month">
               <span>Mes</span>
@@ -328,7 +329,10 @@ function TablaDias({ actual }) {
                       <td className={`n ${tone(d.sal)}`}><strong>{signed(d.sal)}</strong></td>
                     </>
                   )}
-                  <td className="warn small">{d.al.map((a) => <div key={a}>{a}</div>)}</td>
+                  <td className="warn small">
+                    {d.al.map((a) => <div key={a}>{a}</div>)}
+                    {d.rep?.length > 0 && <div className="mrc-note">Marcación repetida ignorada ({d.rep.join(', ')})</div>}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -407,10 +411,21 @@ function Horarios({ cfg, empleados, updateCfg, updateEmp, estado }) {
           </div>
           <span className="mrc-muted">Sin almuerzo. Aplica a quien tenga marcado «sáb».</span>
         </div>
+        <div className="mrc-config-group">
+          <h3>Marcaciones repetidas</h3>
+          <label>
+            Ignorar repetidas a menos de (min)
+            <input
+              type="number" min="0" value={cfg.dup}
+              onChange={(e) => updateCfg((c) => ({ ...c, dup: e.target.value === '' ? '' : Number(e.target.value) }))}
+            />
+          </label>
+          <span className="mrc-muted">Si alguien marca dos veces seguidas, vale la primera.</span>
+        </div>
       </section>
 
       {!empleados.length ? (
-        <p className="mrc-muted">Subí primero el Excel para ver a los empleados.</p>
+        <p className="mrc-muted">Subí primero el archivo .dat para ver a los empleados.</p>
       ) : (
         <div className="mrc-grid">
           {empleados.map(({ id, nom }) => {
@@ -419,6 +434,12 @@ function Horarios({ cfg, empleados, updateCfg, updateEmp, estado }) {
               <section key={id} className="mrc-panel mrc-card">
                 <h2>{nom}</h2>
                 <div className="mrc-fields">
+                  <label className="full">Nombre
+                    <input
+                      type="text" maxLength={60} value={c.nom || ''} placeholder={`Cédula ${id}`}
+                      onChange={(e) => updateEmp(id, { nom: e.target.value })}
+                    />
+                  </label>
                   <label>Entrada<input type="time" value={c.e || ''} onChange={(e) => updateEmp(id, { e: e.target.value })} /></label>
                   <label>Salida<input type="time" value={c.s || ''} onChange={(e) => updateEmp(id, { s: e.target.value })} /></label>
                   <label>Almuerzo propio (min)

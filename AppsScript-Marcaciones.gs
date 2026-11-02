@@ -74,6 +74,7 @@ function sanitizeMarcacionesConfig(data) {
   const clean = {
     al: marcacionesNumero(data.al, 40),
     tol: marcacionesNumero(data.tol, 0),
+    dup: marcacionesNumero(data.dup, 3),
     sab: { e: marcacionesHora(sab.e), s: marcacionesHora(sab.s) },
     emp: {}
   };
@@ -87,6 +88,8 @@ function sanitizeMarcacionesConfig(data) {
         })
       : [];
     const item = { e: marcacionesHora(c.e), s: marcacionesHora(c.s), lab: lab };
+    const nom = String(c.nom || '').trim().slice(0, 60);
+    if (nom) item.nom = nom;
     const al = marcacionesNumero(c.al, null);
     const tol = marcacionesNumero(c.tol, null);
     if (al !== null) item.al = al;

@@ -89,6 +89,8 @@
   font-size: var(--rx-fs-2xs); color: var(--rx-muted);
 }
 .mrc-fields input { width: 100%; }
+.mrc-fields label.full { grid-column: 1 / -1; }
+.mrc-root .mrc-note { color: var(--rx-muted); }
 .mrc-lock { border: 0; margin: 0; padding: 0; min-width: 0; }
 .mrc-status { margin: 0 0 12px; }
 .mrc-status-warn { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; color: var(--mrc-warn); }
@@ -152,4 +154,5 @@
   .mrc-print .neg { color: #b3261e; }
   .mrc-print .warn { color: #8a5a00; }
   .mrc-print .small { min-width: 0; }
+  .mrc-print .mrc-note { color: #666; }
 }

@@ -1,14 +1,16 @@
-// Cálculo de saldos de horas a partir del reporte de marcaciones del reloj.
+// Cálculo de saldos de horas a partir del archivo de marcaciones del reloj (.dat).
 //
-// Formato del Excel (sin encabezados, una fila por marcación):
-//   A cédula | B nombre | C fecha y hora | D min. del sistema | E total min | F total horas
+// Formato del .dat (attlog, sin encabezados, una línea por marcación, separado por tabulaciones):
+//   cédula (con espacios a la izquierda) | fecha y hora | y cuatro columnas que no se usan
 //
-// Reglas (validadas contra los totales del propio reloj):
+// Reglas:
 //  - Los segundos se descartan: 06:04:59 cuenta como 06:04.
+//  - Se espera 4 marcaciones por día (entrada, salida a almuerzo, vuelta, salida).
+//  - Una marcación repetida a pocos minutos de la anterior se ignora (vale la primera).
 //  - Entrada: antes de la hora suma, después resta. Salida: al revés.
 //  - Almuerzo sin hora fija: se compara su DURACIÓN con el tiempo permitido.
+//  - Sin marcas de almuerzo: se suma el tiempo de almuerzo permitido.
 //  - Sábado: horario único, sin almuerzo, sólo para quien lo tenga marcado.
-//  - Un punto sin marcación aporta 0 y se avisa.
 
 export const DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
 export const STORAGE_KEY_MARCACIONES = 'sheets-remote:marcaciones-config-v1';
@@ -34,8 +36,9 @@ export const tone = (min) => (min > 0 ? 'pos' : min < 0 ? 'neg' : '');
 export const CONFIG_INICIAL = {
   al: 40, // minutos de almuerzo permitidos, igual para todos
   tol: 0, // tolerancia en minutos para los negativos
+  dup: 3, // marcaciones repetidas dentro de estos minutos se ignoran (vale la primera)
   sab: { e: '08:00', s: '12:00' }, // horario único de sábado
-  emp: {}, // { [cédula]: { e, s, lab: [1,2,3,4,5], al?, tol? } }
+  emp: {}, // { [cédula]: { nom, e, s, lab: [1,2,3,4,5], al?, tol? } }
 };
 
 export function normalizeConfig(raw) {
@@ -43,6 +46,7 @@ export function normalizeConfig(raw) {
   return {
     al: Number.isFinite(Number(r.al)) ? Number(r.al) : CONFIG_INICIAL.al,
     tol: Number(r.tol) || 0,
+    dup: r.dup === '' ? 0 : Number.isFinite(Number(r.dup)) && r.dup != null ? Number(r.dup) : CONFIG_INICIAL.dup,
     sab: { ...CONFIG_INICIAL.sab, ...(r.sab || {}) },
     emp: r.emp && typeof r.emp === 'object' ? r.emp : {},
   };
@@ -72,57 +76,24 @@ export function saveConfig(cfg) {
   }
 }
 
-/* ─────────────── lectura del Excel ─────────────── */
+/* ─────────────── lectura del .dat ─────────────── */
 
-export function parseFechaHora(v) {
-  if (typeof v === 'number' && v > 30000) {
-    const t = Math.round(v * 86400);
-    const d = Math.floor(t / 86400);
-    const x = new Date(Date.UTC(1899, 11, 30) + d * 864e5);
-    return { f: x.toISOString().slice(0, 10), s: t - d * 86400 };
-  }
-  if (typeof v === 'string') {
-    const s = v.trim();
-    let m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s);
-    if (m) return { f: `${m[1]}-${m[2]}-${m[3]}`, s: +m[4] * 3600 + +m[5] * 60 + +(m[6] || 0) };
-    m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s);
-    if (m) return { f: `${m[3]}-${pad(m[2])}-${pad(m[1])}`, s: +m[4] * 3600 + +m[5] * 60 + +(m[6] || 0) };
-  }
-  return null;
-}
+const LINEA_DAT = /^\s*(\d+)\s+(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2}):(\d{2})/;
 
-/** Filas [A..F] → marcaciones. Ignora encabezados y celdas sueltas. */
-export function filasAMarcaciones(filas) {
+/** Texto del .dat → marcaciones { id, f: 'AAAA-MM-DD', seg: segundos del día }. */
+export function leerAttlog(texto) {
   const registros = [];
   let ignoradas = 0;
-  for (const r of filas) {
-    if (!r || r.every((c) => c == null || c === '')) continue;
-    const a = r[0];
-    const id = typeof a === 'number' ? String(Math.trunc(a)) : /^\d+$/.test(String(a ?? '').trim()) ? String(a).trim() : null;
-    const nom = String(r[1] ?? '').trim();
-    const t = parseFechaHora(r[2]);
-    if (!id || !nom || !t) {
+  for (const linea of String(texto).split(/\r?\n/)) {
+    if (!linea.trim()) continue;
+    const m = LINEA_DAT.exec(linea);
+    if (!m) {
       ignoradas += 1;
       continue;
     }
-    registros.push({ id, nom, f: t.f, m: Math.floor(t.s / 60) }); // segundos descartados
+    registros.push({ id: m[1], f: `${m[2]}-${m[3]}-${m[4]}`, seg: +m[5] * 3600 + +m[6] * 60 + +m[7] });
   }
   return { registros, ignoradas };
-}
-
-/** Lee el .xlsx (ArrayBuffer). La librería se carga recién al subir un archivo. */
-export async function leerExcel(buffer) {
-  const XLSX = await import('xlsx');
-  const wb = XLSX.read(new Uint8Array(buffer), { type: 'array' });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  // El reporte declara ~1 millón de filas vacías: se limita al contenido real (col. C = fecha).
-  let max = 1;
-  for (const k of Object.keys(ws)) {
-    const x = /^C(\d+)$/.exec(k);
-    if (x) max = Math.max(max, Number(x[1]));
-  }
-  ws['!ref'] = `A1:F${max}`;
-  return filasAMarcaciones(XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }));
 }
 
 /* ─────────────── cálculo ─────────────── */
@@ -157,7 +128,11 @@ export function calcularDia(m, c) {
   add(m[n - 1] - S, 's');
   const mid = m.slice(1, n - 1);
   if (!mid.length) {
-    if (!c.sinAlmuerzo) avisos.push('Sin marcas de almuerzo: no se calcula');
+    // Sin marcas de almuerzo se suma el almuerzo permitido (evita confusiones).
+    if (!c.sinAlmuerzo && c.al > 0) {
+      add(c.al, 'a');
+      avisos.push(`Sin marcas de almuerzo: se suman ${c.al} min`);
+    }
   } else if (mid.length === 1) {
     avisos.push('Almuerzo incompleto (una sola marca): no se calcula');
   } else {
@@ -182,10 +157,11 @@ export function calcularEmpleados(regs, mes, cfg) {
   const porId = {};
   for (const r of regs) {
     if (!r.f.startsWith(mes)) continue;
-    const e = (porId[r.id] ??= { id: r.id, nom: r.nom, D: {} });
-    (e.D[r.f] ??= []).push(r.m);
+    const e = (porId[r.id] ??= { id: r.id, D: {} });
+    (e.D[r.f] ??= []).push(r.seg ?? r.m * 60);
   }
   const sabOk = Boolean(cfg.sab?.e && cfg.sab?.s);
+  const ventana = Math.max(0, Number(cfg.dup) || 0) * 60;
 
   return Object.values(porId).map((e) => {
     const c = cfg.emp[e.id];
@@ -194,9 +170,16 @@ export function calcularEmpleados(regs, mes, cfg) {
     let P = 0;
     let N = 0;
     const dias = Object.keys(e.D).sort().map((f) => {
-      const ps = e.D[f].sort((a, b) => a - b);
+      // Marcaciones repetidas a pocos minutos de la anterior: vale la primera.
+      const rep = [];
+      const ps = [];
+      let ultima = null;
+      for (const sg of e.D[f].sort((a, b) => a - b)) {
+        if (ultima !== null && ventana > 0 && sg - ultima <= ventana) rep.push(sg);
+        else { ps.push(Math.floor(sg / 60)); ultima = sg; }
+      }
       const dw = new Date(`${f}T00:00:00Z`).getUTCDay();
-      const base = { f, dw, mk: ps.map(horaTxt).join('  ') };
+      const base = { f, dw, mk: ps.map(horaTxt).join('  '), rep: rep.map((sg) => horaTxt(Math.floor(sg / 60))) };
       if (!cf) return { ...base, al: ['Sin horario configurado'] };
       if (!(c.lab || []).includes(dw)) return { ...base, al: ['Día libre: no se calcula'] };
       if (dw === 6 && !sabOk) return { ...base, al: ['Sin horario de sábado configurado'] };
@@ -213,6 +196,6 @@ export function calcularEmpleados(regs, mes, cfg) {
       (t, d) => (d.o ? { e: t.e + d.o.e, a: t.a + d.o.a, s: t.s + d.o.s } : t),
       { e: 0, a: 0, s: 0 },
     );
-    return { id: e.id, nom: e.nom, cf, dias, P, N, S: P - N, T, avisos: dias.filter((d) => d.al.length).length };
+    return { id: e.id, nom: (c?.nom || '').trim() || e.id, cf, dias, P, N, S: P - N, T, avisos: dias.filter((d) => d.al.length).length };
   });
 }
