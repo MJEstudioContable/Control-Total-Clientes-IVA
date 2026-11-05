@@ -152,8 +152,20 @@ export function calcularDia(m, c) {
 
 const horaTxt = (x) => `${pad(Math.floor(x / 60))}:${pad(x % 60)}`;
 
-/** Saldos del mes por empleado, con saldo del día y saldo total acumulado. */
-export function calcularEmpleados(regs, mes, cfg) {
+/** Clave estable para ediciones/confirmaciones por empleado y fecha. */
+export const claveDiaMarcacion = (id, fecha) => `${id}|${fecha}`;
+
+const minutosHora = (value) => {
+  const n = hm(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+/**
+ * Calcula saldos mensuales. Las ediciones sólo sustituyen las cuatro marcas
+ * efectivas de ese día; las marcas originales se conservan en regs.
+ * edits["cedula|AAAA-MM-DD"] = { slots: [entrada, saleAlmuerzo, vuelveAlmuerzo, salida], attendance? }
+ */
+export function calcularEmpleados(regs, mes, cfg, edits = {}) {
   const porId = {};
   for (const r of regs) {
     if (!r.f.startsWith(mes)) continue;
@@ -165,12 +177,13 @@ export function calcularEmpleados(regs, mes, cfg) {
 
   return Object.values(porId).map((e) => {
     const c = cfg.emp[e.id];
-    const cf = Boolean(c && c.e && c.s);
+    const flexible = c?.tipo === 'flexible';
+    const cf = flexible || Boolean(c && c.e && c.s);
     let sal = 0;
     let P = 0;
     let N = 0;
+    let horas = 0;
     const dias = Object.keys(e.D).sort().map((f) => {
-      // Marcaciones repetidas a pocos minutos de la anterior: vale la primera.
       const rep = [];
       const ps = [];
       let ultima = null;
@@ -179,23 +192,70 @@ export function calcularEmpleados(regs, mes, cfg) {
         else { ps.push(Math.floor(sg / 60)); ultima = sg; }
       }
       const dw = new Date(`${f}T00:00:00Z`).getUTCDay();
-      const base = { f, dw, mk: ps.map(horaTxt).join('  '), rep: rep.map((sg) => horaTxt(Math.floor(sg / 60))) };
-      if (!cf) return { ...base, al: ['Sin horario configurado'] };
-      if (!(c.lab || []).includes(dw)) return { ...base, al: ['Día libre: no se calcula'] };
-      if (dw === 6 && !sabOk) return { ...base, al: ['Sin horario de sábado configurado'] };
+      const key = claveDiaMarcacion(e.id, f);
+      const edit = edits[key] && typeof edits[key] === 'object' ? edits[key] : null;
+      const rawSlots = ps.map(horaTxt);
+      const slots = Array.isArray(edit?.slots)
+        ? Array.from({ length: 4 }, (_, i) => String(edit.slots[i] || '').trim())
+        : Array.from({ length: 4 }, (_, i) => rawSlots[i] || '');
+      const effective = (Array.isArray(edit?.slots) ? slots : rawSlots).map(minutosHora);
+      const completeSlots = effective.length === 4
+        && effective.every((x) => x !== null)
+        && effective.every((x, i) => i === 0 || x >= effective[i - 1]);
+      const effectiveMarks = effective.filter((x) => x !== null);
+      const base = {
+        f, dw, mk: ps.map(horaTxt).join('  '), rep: rep.map((sg) => horaTxt(Math.floor(sg / 60))),
+        rawSlots, slots, editado: Boolean(edit?.slots), asistencia: Boolean(edit?.attendance),
+      };
+
+      if (flexible) {
+        let workMin = null;
+        if (effectiveMarks.length === 2 && effectiveMarks[1] >= effectiveMarks[0]) {
+          workMin = effectiveMarks[1] - effectiveMarks[0];
+        } else if (completeSlots) {
+          workMin = (effective[1] - effective[0]) + (effective[3] - effective[2]);
+        }
+        if (workMin !== null) horas += workMin;
+        const warns = workMin === null
+          ? ['Horas pendientes: completá una entrada y salida, o las cuatro marcas']
+          : [];
+        return { ...base, flexible: true, workMin, al: warns, net: null, sal: null };
+      }
+
+      if (!cf) return { ...base, al: ['Sin horario configurado'], net: null };
+      if (!(c.lab || []).includes(dw)) return { ...base, al: ['Día libre: no se calcula'], net: null };
+      if (dw === 6 && !sabOk) return { ...base, al: ['Sin horario de sábado configurado'], net: null };
+
+      const expected = dw === 6 ? 2 : 4;
+      const marks = Array.isArray(edit?.slots) ? effectiveMarks : ps;
+      const slotsComplete = Array.isArray(edit?.slots)
+        ? (dw === 6
+          ? effective[0] !== null && effective[1] !== null && effective[0] <= effective[1] && effective[2] === null && effective[3] === null
+          : completeSlots && effective.length === 4 && effective.every((x) => x !== null))
+        : marks.length === expected;
+      if (!slotsComplete || marks.length !== expected) {
+        return {
+          ...base, al: [`Marcaciones incompletas (${marks.length}/${expected}): completar y guardar`],
+          net: null, sal: null, pendiente: true,
+        };
+      }
       const horario = dw === 6
         ? { e: cfg.sab.e, s: cfg.sab.s, al: 0, tol: c.tol ?? cfg.tol, sinAlmuerzo: true }
         : { e: c.e, s: c.s, al: c.al === '' || c.al == null ? cfg.al : Number(c.al), tol: c.tol ?? cfg.tol };
-      const d = calcularDia(ps, horario);
+      const calculoMarks = Array.isArray(edit?.slots) ? effective.filter((x) => x !== null) : marks;
+      const d = calcularDia(calculoMarks, horario);
       P += d.pos;
       N += d.neg;
       sal += d.pos - d.neg;
-      return { ...base, ...d, net: d.pos - d.neg, sal };
+      return { ...base, ...d, net: d.pos - d.neg, sal, flexible: false };
     });
     const T = dias.reduce(
       (t, d) => (d.o ? { e: t.e + d.o.e, a: t.a + d.o.a, s: t.s + d.o.s } : t),
       { e: 0, a: 0, s: 0 },
     );
-    return { id: e.id, nom: (c?.nom || '').trim() || e.id, cf, dias, P, N, S: P - N, T, avisos: dias.filter((d) => d.al.length).length };
+    return {
+      id: e.id, nom: (c?.nom || '').trim() || e.id, cf, flexible, dias,
+      P, N, S: P - N, T, horas, avisos: dias.filter((d) => d.al.length).length,
+    };
   });
 }

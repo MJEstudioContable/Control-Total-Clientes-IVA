@@ -156,3 +156,14 @@
   .mrc-print .small { min-width: 0; }
   .mrc-print .mrc-note { color: #666; }
 }
+
+.mrc-day-editor { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--rx-line); border-radius: 10px; background: var(--rx-hover); white-space: normal; }
+.mrc-missing { display: flex; flex-direction: column; gap: 5px; width: min(100%, 320px); color: var(--rx-muted); font-size: var(--rx-fs-xs); }
+.mrc-slot-grid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 10px; }
+.mrc-slot-grid label { display: flex; flex-direction: column; gap: 5px; color: var(--rx-muted); font-size: var(--rx-fs-2xs); }
+.mrc-slot-grid input { width: 100%; }
+.mrc-badge { display: inline-block; margin-left: 7px; padding: 2px 6px; border-radius: 999px; background: var(--rx-hover); color: var(--rx-muted); font-size: var(--rx-fs-2xs); font-weight: 600; }
+.mrc-attendance { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 720px) { .mrc-slot-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); } }
+.mrc-status-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 12px; color: var(--rx-muted); font-size: var(--rx-fs-xs); }
+.mrc-status-line.error { color: var(--mrc-warn); }

@@ -606,14 +606,23 @@ export const api = {
     saveConfig: (data) => request({ action: 'ivaSaveConfig', data }),
   },
 
-  // Módulo Marcaciones: sólo guarda los horarios de los empleados (el backend
-  // los rechaza si el rol no es ADMINISTRADOR o SUPERUSUARIO). El Excel no se envía.
+  // Marcaciones: horarios y datos procesados/ajustes mensuales se guardan en el servidor;
+  // el archivo .dat original se procesa localmente y no se envía.
   marcaciones: {
     getConfig: async () => {
       const data = await request({ action: 'marcacionesGetConfig' });
       return data.config || null;
     },
     saveConfig: (data) => request({ action: 'marcacionesSaveConfig', data }),
+    getMonths: async () => {
+      const data = await request({ action: 'marcacionesGetMonths' });
+      return data.months || [];
+    },
+    getMonth: async (month) => {
+      const data = await request({ action: 'marcacionesGetMonth', month });
+      return data.data || null;
+    },
+    saveMonth: (month, data) => request({ action: 'marcacionesSaveMonth', month, data }),
   },
 
   clearCache: () => {

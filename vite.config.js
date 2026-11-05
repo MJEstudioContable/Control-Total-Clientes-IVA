@@ -24,11 +24,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Control Remoto Clientes',
-        short_name: 'Clientes',
-        description: 'Control remoto de la planilla de clientes',
-        theme_color: '#000000',
-        background_color: '#000000',
+        name: 'Control Total Clientes IVA · MJ Estudio Contable',
+        short_name: 'MJ Clientes',
+        description: 'Gestión de clientes e IVA de MJ Estudio Contable',
+        lang: 'es-PY',
+        theme_color: '#f4f7fa',
+        background_color: '#f4f7fa',
         display: 'standalone',
         start_url: '/',
         icons: [

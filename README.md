@@ -83,9 +83,11 @@ secuencia `Marcaciones`, pegar su contenido y agregar en `doPost`, antes del
 const marcacionesResponse = handleMarcacionesAction(action, body, sessionUser, sessionRole);
 if (marcacionesResponse) return marcacionesResponse;
 ```
-Luego, **Nueva versión** de la implementación. Guarda los horarios en la hoja
-`Marcaciones Config` de la planilla de administración; sin esto la pestaña
-funciona igual, pero los horarios quedan sólo en el navegador.
+Luego, **Nueva versión** de la implementación. Guarda horarios en `Marcaciones Config`
+y las planillas procesadas/ajustes diarios por mes en `Marcaciones Datos` dentro de
+la planilla de administración. El archivo `.dat` original no se envía. Al publicar
+cambios del módulo, actualizar este archivo de Apps Script y crear una nueva versión
+del Web App además de publicar el frontend.
 
 ### Migrar los datos de la app de Netlify
 
